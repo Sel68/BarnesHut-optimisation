@@ -1,23 +1,25 @@
 #pragma once
 #include <cstddef>
-#include<iostream>
+#include <iostream>
+#include <stdexcept>
+
 using namespace std;
 
 namespace ds {
 
-// Singly Linked List
+template<typename T>
 class SList {
 private:
     struct Node {
-        int data;
+        T data;
         Node* next;
-        Node(int val) : data(val), next(nullptr) {}
+        Node(const T& val) : data(val), next(nullptr) {}
     };
     Node* head;
     Node* tail;
-    int size;
+    size_t sz;
 public:
-    SList() : head(nullptr), tail(nullptr), size(0) {}
+    SList() : head(nullptr), tail(nullptr), sz(0) {}
     ~SList() {
         Node* current = head;
         while (current) {
@@ -26,7 +28,8 @@ public:
             current = nextNode;
         }
     }
-    void push_back(int value) {
+
+    void push_back(const T& value) {
         Node* newNode = new Node(value);
         if (!head) {
             head = tail = newNode;
@@ -34,8 +37,9 @@ public:
             tail->next = newNode;
             tail = newNode;
         }
-        size++;
+        ++sz;
     }
+
     void pop_back() {
         if (!head) return;
         if (head == tail) {
@@ -43,34 +47,32 @@ public:
             head = tail = nullptr;
         } else {
             Node* current = head;
-            while (current->next != tail) {
-                current = current->next;
-            }
+            while (current->next != tail) current = current->next;
             delete tail;
             tail = current;
             tail->next = nullptr;
         }
-        size--;
+        --sz;
     }
-    int get(int index) {
-        if (index < 0 || index >= size) return -1;
+
+    T get(size_t index) const {
+        if (index >= sz) throw out_of_range("SList::get: index out of range");
         Node* current = head;
-        for (int i = 0; i < index; i++) {
-            current = current->next;
-        }
+        for (size_t i = 0; i < index; ++i) current = current->next;
         return current->data;
     }
-    void set(int index, int value) {
-        if (index < 0 || index >= size) return;
+
+    void set(size_t index, const T& value) {
+        if (index >= sz) throw out_of_range("SList::set: index out of range");
         Node* current = head;
-        for (int i = 0; i < index; i++) {
-            current = current->next;
-        }
+        for (size_t i = 0; i < index; ++i) current = current->next;
         current->data = value;
     }
-    int length() { return size; }
-    bool empty() { return size == 0; }
-    void print() {
+
+    size_t length() const { return sz; }
+    bool empty() const { return sz == 0; }
+
+    void print() const {
         Node* current = head;
         while (current) {
             cout << current->data << " ";
@@ -80,52 +82,55 @@ public:
     }
 };
 
-//Dynamic Array
+
+template<typename T>
 class DynamicArray {
 private:
-    int* arr;
-    int capacity;
-    int size;
+    T* arr;
+    size_t capacity;
+    size_t sz;
 
     void resize() {
-        capacity *= 2;
-        int* newArr = new int[capacity];
-        for (int i = 0; i < size; i++) newArr[i] = arr[i];
+        capacity = (capacity == 0) ? 1 : capacity * 2;
+        T* newArr = new T[capacity];
+        for (size_t i = 0; i < sz; ++i) newArr[i] = arr[i];
         delete[] arr;
         arr = newArr;
     }
 
 public:
-    DynamicArray(int cap = 2) : capacity(cap), size(0) {
-        arr = new int[capacity];
+    DynamicArray(size_t cap = 2) : capacity(cap ? cap : 2), sz(0) {
+        arr = new T[capacity];
     }
 
     ~DynamicArray() {
         delete[] arr;
     }
 
-    void push(int value) {
-        if (size == capacity) resize();
-        arr[size++] = value;
+    void push(const T& value) {
+        if (sz == capacity) resize();
+        arr[sz++] = value;
     }
 
     void pop() {
-        if (size > 0) size--;
+        if (sz > 0) --sz;
     }
 
-    int get(int index) {
-        return (index >= 0 && index < size) ? arr[index] : -1;
+    T get(size_t index) const {
+        if (index >= sz) throw out_of_range("DynamicArray::get: index out of range");
+        return arr[index];
     }
 
-    void set(int index, int value) {
-        if (index >= 0 && index < size) arr[index] = value;
+    void set(size_t index, const T& value) {
+        if (index >= sz) throw out_of_range("DynamicArray::set: index out of range");
+        arr[index] = value;
     }
 
-    int length() { return size; }
-    bool empty() { return size == 0; }
+    size_t length() const { return sz; }
+    bool empty() const { return sz == 0; }
 
-    void print() {
-        for (int i = 0; i < size; i++) cout << arr[i] << " ";
+    void print() const {
+        for (size_t i = 0; i < sz; ++i) cout << arr[i] << " ";
         cout << endl;
     }
 };
