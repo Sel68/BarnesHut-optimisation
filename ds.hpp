@@ -140,8 +140,39 @@ class Position2D{
 public:
     T x, y;
 
-    void Vector2() : x(0), y(0) {}
-    void Vector2(T _x, T _y) : x(_x), y(_y) {}
+    void Position2D() : x(0), y(0) {}
+    void Position2D(T _x, T _y) : x(_x), y(_y) {}
+
+    Position2D operator+ (Position2D& rhs) const {
+        return Position2D(x +rhs.x, y+rhs.y);
+    }
+    Position2D operator- (Position2D& rhs) const {
+        return Position2D(x -rhs.x, y-rhs.y);
+    }
+    Position2D operator* (T scalar) const {
+        return Position2D(x *scalar, y *scalar);
+    }
+    Position2D operator/ (T scalar) const { 
+        if (std::abs(scalar) < 1e-9) throw std::runtime_error("Position2D: Division by zero");
+
+        return Position2D(x /scalar, y /scalar); 
+    }
+
+    Position2D& operator+= (const Position2D& rhs) {
+        x += rhs.x; 
+        y += rhs.y; return *this;
+    }
+    Position2D& operator-= (const Position2D& rhs) {
+        x += rhs.x;
+        y -= rhs.y; 
+        return *this;
+    }
+    Position2D& operator*= (T scalar) {
+        x *=scalar; 
+        y *=scalar;
+        return *this;
+    }
+
 };
 
 }
