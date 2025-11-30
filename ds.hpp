@@ -173,6 +173,21 @@ public:
         return *this;
     }
 
+    T dot(const Position2D& rhs) const { 
+        return x*rhs.x + y*rhs.y;
+    }
+    T magSq() const {
+        return x*x + y*y;
+    }
+    T mag() const { 
+        return std::sqrt(magSq());
+    }
+    
+    Position2D normalized() const {
+        T m = mag();
+        if (m == 0) return Position2D(0, 0);
+        return *this/m;
+    }
 };
 
 }
