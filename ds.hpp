@@ -188,6 +188,11 @@ public:
         if (m == 0) return Position2D(0, 0);
         return *this/m;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const Position2D& v) {
+        os << "[" << v.x << ", " << v.y << "]";
+        return os;
+    }
 };
 
 }
