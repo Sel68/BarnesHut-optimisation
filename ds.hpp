@@ -135,4 +135,13 @@ public:
     }
 };
 
+template <typename T>
+class Position2D{
+public:
+    T x, y;
+
+    void Vector2() : x(0), y(0) {}
+    void Vector2(T _x, T _y) : x(_x), y(_y) {}
+};
+
 }
