@@ -195,4 +195,25 @@ public:
     }
 };
 
-}
+
+struct BoundingBox {
+    Position2D<double> center;
+    double halfDim;
+
+    bool contains(const Position2D<double>& p) const {
+        return (p.x >= center.x - halfDim && 
+            p.x < center.x + halfDim &&
+            p.y >= center.y - halfDim && 
+            p.y < center.y + halfDim);
+    }
+
+    bool intersects(const BoundingBox& other) const {
+        return !(other.center.x - other.halfDim > center.x + halfDim ||
+            other.center.x + other.halfDim < center.x - halfDim ||
+            other.center.y - other.halfDim > center.y + halfDim ||
+            other.center.y + other.halfDim < center.y - halfDim);
+    }
+};
+
+
+
