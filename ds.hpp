@@ -136,44 +136,44 @@ public:
 };
 
 template <typename T>
-class Position2D{
+class Vec2D{
 public:
     T x, y;
 
-    Position2D() : x(0), y(0) {}
-    Position2D(T _x, T _y) : x(_x), y(_y) {}
+    Vec2D() : x(0), y(0) {}
+    Vec2D(T _x, T _y) : x(_x), y(_y) {}
 
-    Position2D operator+ (Position2D& rhs) const {
-        return Position2D(x +rhs.x, y+rhs.y);
+    Vec2D operator+ (Vec2D& rhs) const {
+        return Vec2D(x +rhs.x, y+rhs.y);
     }
-    Position2D operator- (Position2D& rhs) const {
-        return Position2D(x -rhs.x, y-rhs.y);
+    Vec2D operator- (Vec2D& rhs) const {
+        return Vec2D(x -rhs.x, y-rhs.y);
     }
-    Position2D operator* (T scalar) const {
-        return Position2D(x *scalar, y *scalar);
+    Vec2D operator* (T scalar) const {
+        return Vec2D(x *scalar, y *scalar);
     }
-    Position2D operator/ (T scalar) const { 
-        if (std::abs(scalar) < 1e-9) throw std::runtime_error("Position2D: Division by zero");
+    Vec2D operator/ (T scalar) const { 
+        if (std::abs(scalar) < 1e-9) throw std::runtime_error("Vec2D: Division by zero");
 
-        return Position2D(x /scalar, y /scalar); 
+        return Vec2D(x /scalar, y /scalar); 
     }
 
-    Position2D& operator+= (const Position2D& rhs) {
+    Vec2D& operator+= (const Vec2D& rhs) {
         x += rhs.x; 
         y += rhs.y; return *this;
     }
-    Position2D& operator-= (const Position2D& rhs) {
+    Vec2D& operator-= (const Vec2D& rhs) {
         x += rhs.x;
         y -= rhs.y; 
         return *this;
     }
-    Position2D& operator*= (T scalar) {
+    Vec2D& operator*= (T scalar) {
         x *=scalar; 
         y *=scalar;
         return *this;
     }
 
-    T dot(const Position2D& rhs) const { 
+    T dot(const Vec2D& rhs) const { 
         return x*rhs.x + y*rhs.y;
     }
     T magSq() const {
@@ -183,13 +183,13 @@ public:
         return std::sqrt(magSq());
     }
     
-    Position2D normalized() const {
+    Vec2D normalized() const {
         T m = mag();
-        if (m == 0) return Position2D(0, 0);
+        if (m == 0) return Vec2D(0, 0);
         return *this/m;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Position2D& v) {
+    friend std::ostream& operator<<(std::ostream& os, const Vec2D& v) {
         os << "[" << v.x << ", " << v.y << "]";
         return os;
     }
@@ -197,7 +197,7 @@ public:
 
 struct Particle {
     size_t id;
-    Position2D<double> pos, vel, acc;
+    Vec2D<double> pos, vel, acc;
     double mass;
     double charge;
     bool isStatic;
@@ -208,10 +208,10 @@ struct Particle {
 
 
 struct BoundingBox {
-    Position2D<double> center;
+    Vec2D<double> center;
     double halfDim;
 
-    bool contains(const Position2D<double>& p) const {
+    bool contains(const Vec2D<double>& p) const {
         return (p.x >= center.x - halfDim && 
             p.x < center.x + halfDim &&
             p.y >= center.y - halfDim && 
