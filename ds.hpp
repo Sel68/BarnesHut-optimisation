@@ -140,8 +140,8 @@ class Position2D{
 public:
     T x, y;
 
-    void Position2D() : x(0), y(0) {}
-    void Position2D(T _x, T _y) : x(_x), y(_y) {}
+    Position2D() : x(0), y(0) {}
+    Position2D(T _x, T _y) : x(_x), y(_y) {}
 
     Position2D operator+ (Position2D& rhs) const {
         return Position2D(x +rhs.x, y+rhs.y);
@@ -195,6 +195,17 @@ public:
     }
 };
 
+struct Particle {
+    size_t id;
+    Position2D<double> pos, vel, acc;
+    double mass;
+    double charge;
+    bool isStatic;
+
+    Particle(size_t _id = 0)
+        : id(_id), pos(0,0), vel(0,0), acc(0,0), mass(1.0), charge(0.0), isStatic(false) {}
+};
+
 
 struct BoundingBox {
     Position2D<double> center;
@@ -214,6 +225,6 @@ struct BoundingBox {
             other.center.y + other.halfDim < center.y - halfDim);
     }
 };
-
+}
 
 
