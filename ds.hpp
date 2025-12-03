@@ -225,6 +225,37 @@ struct BoundingBox {
             other.center.y + other.halfDim < center.y - halfDim);
     }
 };
+
+class QuadNode {
+public:
+    BoundingBox bounds;
+    
+    double totalMass;
+    Vec2D<double> centerOfMass;
+    Particle* body;
+    QuadNode* children[4]; 
+    bool isLeaf;
+
+    QuadNode(){
+        totalMass = 0;
+        centerOfMass = {0, 0};
+        body = nullptr;
+        isLeaf = true; 
+        for(int i=0; i<4; ++i) children[i] = nullptr;
+    }
+
+    void init(BoundingBox b) {
+        bounds = b;
+        totalMass = 0;
+        centerOfMass = {0,0};
+        body = nullptr;
+        isLeaf = true;
+        for(int i=0; i<4; ++i) children[i] = nullptr;
+    }
+};
+
+
+
 }
 
 
