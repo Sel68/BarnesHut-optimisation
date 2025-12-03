@@ -254,6 +254,34 @@ public:
     }
 };
 
+// Memory allocator
+template<typename T>
+class BlockAllocator {
+private:
+    std::vector<T> memory_pool;
+    size_t current_index;
+
+public:
+    BlockAllocator(size_t capacity){
+        current_index = 0;
+        memory_pool.resize(capacity);
+    }
+
+    void reset() {
+        current_index = 0;
+    }
+
+    T* allocate() {
+        if (current_index >= memory_pool.size()) {
+            throw std::overflow_error("Allocator: Out of memory block");
+        }
+        return &memory_pool[current_index++];
+    }
+    
+    size_t used_memory() const {
+        return current_index * sizeof(T);
+    }
+};
 
 
 }
