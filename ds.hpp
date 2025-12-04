@@ -282,8 +282,6 @@ public:
         return current_index * sizeof(T);
     }
 };
-
-
 }
 
 
