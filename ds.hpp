@@ -7,6 +7,15 @@ using namespace std;
 
 namespace ds {
 
+constexpr double G_CONST = 6.67430e-11;
+constexpr double COULOMB_K = 8.98755e9;
+constexpr double THETA_DEFAULT = 0.5;
+constexpr double SOFTENING = 1e-2;
+constexpr double eps = 1e-8;
+
+enum class ForceType { GRAVITY, ELECTRIC, LENNARD_JONES, CUSTOM };
+enum class IntegratorType { EULER, SYMPLECTIC_EULER, VERLET, RK4 };
+
 template<typename T>
 class SList {
 private:
@@ -143,34 +152,31 @@ public:
     Vec2D() : x(0), y(0) {}
     Vec2D(T _x, T _y) : x(_x), y(_y) {}
 
-    Vec2D operator+ (Vec2D& rhs) const {
-        return Vec2D(x +rhs.x, y+rhs.y);
+    Vec2D operator+ (const Vec2D& rhs) const { 
+        return Vec2D(x + rhs.x, y + rhs.y);
     }
-    Vec2D operator- (Vec2D& rhs) const {
-        return Vec2D(x -rhs.x, y-rhs.y);
+    Vec2D operator- (const Vec2D& rhs) const { 
+        return Vec2D(x - rhs.x, y - rhs.y); 
     }
-    Vec2D operator* (T scalar) const {
-        return Vec2D(x *scalar, y *scalar);
+    Vec2D operator* (T scalar) const { 
+        return Vec2D(x * scalar, y * scalar); 
     }
-    Vec2D operator/ (T scalar) const { 
-        if (std::abs(scalar) < 1e-9) throw std::runtime_error("Vec2D: Division by zero");
+    Vec2D operator/ (T scalar) const {
+        if (abs(scalar) < eps) throw std::runtime_error("Vec2D: Division by zero");
+        return Vec2D(x/scalar, y/scalar);
+    }
 
-        return Vec2D(x /scalar, y /scalar); 
+    Vec2D& operator+= (const Vec2D& rhs) { 
+        x += rhs.x; y += rhs.y; 
+        return *this; 
     }
-
-    Vec2D& operator+= (const Vec2D& rhs) {
-        x += rhs.x; 
-        y += rhs.y; return *this;
+    Vec2D& operator-= (const Vec2D& rhs) { 
+        x -= rhs.x; y -= rhs.y; 
+        return *this; 
     }
-    Vec2D& operator-= (const Vec2D& rhs) {
-        x += rhs.x;
-        y -= rhs.y; 
-        return *this;
-    }
-    Vec2D& operator*= (T scalar) {
-        x *=scalar; 
-        y *=scalar;
-        return *this;
+    Vec2D& operator*= (T scalar) { 
+        x *= scalar; y *= scalar; 
+        return *this; 
     }
 
     T dot(const Vec2D& rhs) const { 
@@ -280,6 +286,127 @@ public:
     
     size_t used_memory() const {
         return current_index * sizeof(T);
+    }
+};
+
+class BarnesHutTree {
+private:
+    QuadNode* root;
+    BlockAllocator<QuadNode> allocator;
+    double theta;
+
+    //index (NW=0, NE=1, SW=2, SE=3)
+    int getQuadrant(const BoundingBox& b, const Vec2D<double>& p)const{
+        bool right = p.x > b.center.x;
+        bool top = p.y > b.center.y;
+        if (!right && top) return 0;
+        if (right && top) return 1;
+        if (!right && !top) return 2;
+        return 3;
+    }
+
+    void subdivide(QuadNode* node) {
+        double half = node->bounds.halfDim / 2.0;
+        Vec2D c = node->bounds.center;
+        
+        node->children[0] = allocator.allocate();
+        node->children[0]->init({ Vec2D(c.x-half, c.y+half), half});
+
+        node->children[1] = allocator.allocate();
+        node->children[1]->init({ Vec2D(c.x+half, c.y+half), half});
+
+        node->children[2] = allocator.allocate();
+        node->children[2]->init({ Vec2D(c.x-half, c.y-half), half});
+
+        node->children[3] = allocator.allocate();
+        node->children[3]->init({ Vec2D(c.x+half, c.y-half), half});
+        
+        node->isLeaf = false;
+    }
+
+    void insertRecursive(QuadNode* node, Particle* p) {
+        //empty leaf, pyt body here
+        if (node->isLeaf && node->body == nullptr) {
+            node->body = p;
+            node->totalMass = p->mass;
+            node->centerOfMass = p->pos;
+            return;
+        }
+
+        // occupied leaf, subdivide and re-insert both
+        if (node->isLeaf && node->body != nullptr) {
+            if ((node->body->pos - p->pos).magSq() < eps) {
+                p->pos.x += 1e-5; 
+            }
+
+            Particle* oldBody = node->body;
+            node->body = nullptr;
+            subdivide(node);
+            
+            insertRecursive(node->children[getQuadrant(node->bounds, oldBody->pos)], oldBody);
+            insertRecursive(node->children[getQuadrant(node->bounds, p->pos)], p);
+            
+            // Update internal node aggregates, CoM
+            node->totalMass = oldBody->mass + p->mass;
+            node->centerOfMass = ((oldBody->pos * oldBody->mass) + (p->pos * p->mass)) / node->totalMass;
+            return;
+        }
+
+        // recurse on internal node
+        if (!node->isLeaf) {
+            // Update Center of Mass: R_new = (M*R + m*r) / (M+m)
+            double newMass = node->totalMass + p->mass;
+            node->centerOfMass = (node->centerOfMass * node->totalMass + p->pos * p->mass) / newMass;
+            node->totalMass = newMass;
+
+            insertRecursive(node->children[getQuadrant(node->bounds, p->pos)], p);
+        }
+    }
+
+    Vec2D<double> computeForceRecursive(QuadNode* node, const Particle* p, double k, double power) const {
+        if (!node || node->totalMass <= 0) return Vec2D(0.0,0.0);
+        
+        Vec2D<double> rVec = node->centerOfMass - p->pos;
+        double rSq = rVec.magSq();
+        double r = sqrt(rSq);
+        double s = node->bounds.halfDim * 2.0;
+
+        // Barnes-Hut MAC: If far enough (s/d < theta), treat as single body
+        if (node->isLeaf || (s / r < theta)) {
+            if (node->body == p) return Vec2D(0.0,0.0); // Self
+            
+            double dist = max(r, SOFTENING); // 
+            double fMag = (k * p->mass * node->totalMass) / pow(dist, power);
+            return rVec * (fMag / dist);
+        }
+
+        // Otherwise, recurse deeper
+        Vec2D totalForce(0.0,0.0);
+        for(int i=0; i<4; ++i) {
+            totalForce += computeForceRecursive(node->children[i], p, k, power);
+        }
+        return totalForce;
+    }
+
+public:
+    // Allocator size = Est. Particles * 2 (for safety)
+    BarnesHutTree(size_t maxParticles, double _theta = THETA_DEFAULT) 
+        : allocator(maxParticles * 4), theta(_theta), root(nullptr) {}
+
+    void build(std::vector<Particle>& particles, BoundingBox worldBounds) {
+        allocator.reset();
+        root = allocator.allocate();
+        root->init(worldBounds);
+
+        for (auto& p : particles) {
+            // Bounds check
+            if (worldBounds.contains(p.pos)) {
+                insertRecursive(root, &p);
+            }
+        }
+    }
+    Vec2D<double> getForceOn(const Particle* p, double k, double power) {
+        return computeForceRecursive(root, p, k, power);
     }
 };
 }
