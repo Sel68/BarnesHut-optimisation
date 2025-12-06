@@ -1,14 +1,13 @@
 #include <iostream>
 #include <fstream>
-#include <cstdlib>      // For rand() and srand()
-#include <ctime>        // For time()
+#include <cstdlib>
+#include <ctime>
 using namespace std;
 
-// Set bounds for random x and y generation
+// X and Y bounds for box
 const double BOUND_X = 100.0;
 const double BOUND_Y = 100.0;
 
-// Function that generates N random points and writes them to a file
 void generateRandomPoints(const string& filename, int N) {
     ofstream fout(filename);
 
@@ -18,12 +17,10 @@ void generateRandomPoints(const string& filename, int N) {
     }
 
     for (int i = 0; i < N; i++) {
-
         double x = -BOUND_X + (static_cast<double>(rand()) / RAND_MAX) * (2 * BOUND_X);
         double y = -BOUND_Y + (static_cast<double>(rand()) / RAND_MAX) * (2 * BOUND_Y);
         double mass = 1 + (static_cast<double>(rand()) / RAND_MAX) * 10;
 
-        // WRITE AS x, y, mass
         fout << x << "," << y << "," << mass << "\n";
     }
 cout<<"Random points written to random_coordinates.txt\n";
@@ -32,17 +29,14 @@ cout<<"Random points written to random_coordinates.txt\n";
 
 
 int main() {
-    srand(time(0));   // Seed random generator
+    srand(time(0));
 
     string filename;
     int N;
-
     cout << "Enter output filename: ";
     cin >> filename;
-
     cout << "Enter number of random points: ";
     cin >> N;
-
     generateRandomPoints(filename, N);
 
     return 0;

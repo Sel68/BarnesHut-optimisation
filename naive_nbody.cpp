@@ -1,13 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
-#include <cstdlib> // rand(), srand()
-#include <ctime>   // time()
+#include <cstdlib>
+#include <ctime>
 using namespace std;
 
 
 struct Body {
-    double x, y;    //
+    double x, y;
     double mass;
     double vx, vy;  
 };
@@ -17,7 +17,7 @@ struct Force {
 };
 
 
-const double G = 1.0;
+const double G = 6.67430e-11;
 const double DT = 1e-6;
 const double EPS = 1e-6;
 const double BOUND_X = 10.0;
@@ -31,63 +31,30 @@ void calculateForcesAndUpdate(Body* bodies, Force* forces, int N, ofstream &fout
 
 int main() {
     srand(time(0)); 
-
     Body* bodies = nullptr;
     Force* forces = nullptr; 
+    
     int N;
+    string filename = "random_coordinates.txt";
+    readFromFile(bodies, N, filename);
+    forces = new Force[N];
 
-    // -------------------- Objective 1 & 1.5 --------------------
-    int choice;
-    cout << "Choose input method:\n1) Enter points manually\n2) Read from file\n";
-    cin >> choice;
-
-    if (choice == 1) {
-        cout << "Enter number of points: ";
-        cin >> N;
-        bodies = new Body[N];
-        forces = new Force[N];
-        cout << "Enter mass, x, y for each particle:\n";
-        for (int i = 0; i < N; i++) {
-            cin >> bodies[i].mass >> bodies[i].x >> bodies[i].y;
-            bodies[i].vx = bodies[i].vy = 0.0;
-        }
-    } else if (choice == 2) {
-        string filename;
-        cout << "Enter filename: ";
-        cin >> filename;
-        readFromFile(bodies, N, filename); // -------------------- Objective 2
-        forces = new Force[N];
-    } else {
-        cout << "Invalid choice!\n";
-        return 0;
-    }
-
-    // -------------------- Objective 2.5 --------------------
+    // for safety
     N = removeOutOfBoundary(bodies, N);
 
-    int K;
-    cout << "Enter number of simulation steps: ";
-    cin >> K;
+    int K = 1e6;
 
     ofstream fout("simulation_output.txt");
-    fout << "x, y, mass\n"; // Header
+     // Header
+    fout << "x, y, mass\n";
 
-    // -------------------- Objective 4,5,6,7 --------------------
     for (int step = 0; step < K; step++) {
         calculateForcesAndUpdate(bodies, forces, N, fout);
-        fout << "\n\n"; // marks end of current step - Objective 6
+        fout << "\n\n";
         cout << "Step " << step+1 << " recorded.\n";
     }
 
     fout.close();
-
-    // -------------------- Objective 8 --------------------
-    int N_random;
-    cout << "Enter number of random points to generate: ";
-    cin >> N_random;
-    generateRandomPoints("random_points.txt", N_random);
-    cout << "Random points saved in random_points.txt\n";
-
     
     delete[] bodies;
     delete[] forces;
@@ -96,7 +63,6 @@ int main() {
     return 0;
 }
 
-// -------------------- Objective 2: Read from file safely using only dynamic arrays --------------------
 void readFromFile(Body* &bodies, int &N, string filename) {
     ifstream fin(filename);
     if (!fin.is_open()) {
@@ -108,12 +74,13 @@ void readFromFile(Body* &bodies, int &N, string filename) {
     string line;
     int count = 0;
 
-    // -------------------- First pass: count valid lines --------------------
     while (getline(fin, line)) {
         line.erase(0, line.find_first_not_of(" \t\r\n"));
         line.erase(line.find_last_not_of(" \t\r\n") + 1);
-        if (line.empty()) continue; // skip blank lines
-        if (line.find_first_not_of("0123456789+-.eE,") != string::npos) continue; // skip headers
+        // skip blank lines
+        if (line.empty()) continue; 
+        // skip headers
+        if (line.find_first_not_of("0123456789+-.eE,") != string::npos) continue;
         count++;
     }
 
@@ -123,7 +90,6 @@ void readFromFile(Body* &bodies, int &N, string filename) {
     fin.clear();
     fin.seekg(0, ios::beg);
 
-    // -------------------- Second pass: read data --------------------
     int index = 0;
     while (getline(fin, line) && index < N) {
         line.erase(0, line.find_first_not_of(" \t\r\n"));
@@ -143,7 +109,6 @@ void readFromFile(Body* &bodies, int &N, string filename) {
     fin.close();
 }
 
-// -------------------- Objective 2.5: Remove points outside boundary --------------------
 int removeOutOfBoundary(Body* bodies, int N) {
     int count = 0;
     for (int i = 0; i < N; i++) {
@@ -155,7 +120,6 @@ int removeOutOfBoundary(Body* bodies, int N) {
     return count;
 }
 
-// -------------------- Objective 4 & 5: Force calculation and position update --------------------
 void calculateForcesAndUpdate(Body* bodies, Force* forces, int N, ofstream &fout) {
     // Reset forces
     for (int i = 0; i < N; i++) {
@@ -176,7 +140,7 @@ void calculateForcesAndUpdate(Body* bodies, Force* forces, int N, ofstream &fout
             double Fy = F * dy / dist;
 
             forces[i].fx += Fx; forces[i].fy += Fy;
-            forces[j].fx -= Fx; forces[j].fy -= Fy; // Newton's third law
+            forces[j].fx -= Fx; forces[j].fy -= Fy;  // Newton's third law
         }
     }
 
@@ -192,7 +156,6 @@ void calculateForcesAndUpdate(Body* bodies, Force* forces, int N, ofstream &fout
     }
 }
 
-// -------------------- Objective 8: Generate random points --------------------
 void generateRandomPoints(string filename, int N) {
     ofstream fout(filename);
     for (int i = 0; i < N; i++) {
