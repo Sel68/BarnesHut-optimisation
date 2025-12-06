@@ -42,7 +42,7 @@ int main() {
     // for safety
     N = removeOutOfBoundary(bodies, N);
 
-    int K = 1e6;
+    int K = 1000;
 
     ofstream fout("simulation_output.txt");
      // Header

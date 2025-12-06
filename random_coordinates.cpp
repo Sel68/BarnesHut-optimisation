@@ -31,10 +31,8 @@ cout<<"Random points written to random_coordinates.txt\n";
 int main() {
     srand(time(0));
 
-    string filename;
+    string filename = "random_coordinates.txt";
     int N;
-    cout << "Enter output filename: ";
-    cin >> filename;
     cout << "Enter number of random points: ";
     cin >> N;
     generateRandomPoints(filename, N);
