@@ -8,6 +8,9 @@ using namespace std;
 const double BOUND_X = 100.0;
 const double BOUND_Y = 100.0;
 
+const double MASS_LOW = 10;
+const double MASS_HIGH = 1e4;
+
 void generateRandomPoints(const string& filename, int N) {
     ofstream fout(filename);
 
@@ -19,8 +22,8 @@ void generateRandomPoints(const string& filename, int N) {
     for (int i = 0; i < N; i++) {
         double x = -BOUND_X + (static_cast<double>(rand()) / RAND_MAX) * (2 * BOUND_X);
         double y = -BOUND_Y + (static_cast<double>(rand()) / RAND_MAX) * (2 * BOUND_Y);
-        double mass = 1 + (static_cast<double>(rand()) / RAND_MAX) * 10;
-
+        double mass = MASS_LOW  
+            + (static_cast<double>(rand()) / RAND_MAX) *(MASS_HIGH - MASS_LOW);
         fout << x << "," << y << "," << mass << "\n";
     }
 cout<<"Random points written to random_coordinates.txt\n";
