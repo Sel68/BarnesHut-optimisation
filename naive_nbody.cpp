@@ -1,205 +1,130 @@
 #include <iostream>
-#include <fstream>
+#include <vector>       // Currently using vector for simplicity
 #include <cmath>
-#include <cstdlib> // rand(), srand()
-#include <ctime>   // time()
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include "ds.hpp"       // to contain ds::Particle and ds::Vec2D
+
 using namespace std;
 
 
-struct Body {
-    double x, y;    //
-    double mass;
-    double vx, vy;  
+// Implements the Naive O(N^2) N-body simulation
+class NaiveSimulation {
+    vector<ds::Particle> ps;   
+    double dt = 0.01;          
+    double K_val, Dist_Pow;  
+    ofstream file;             
+
+public:
+    
+    // we initialize simulation by loading particles from file
+    void init(const string& f, double k, double p) {
+        K_val = k; Dist_Pow = p; ps.clear();
+        ifstream in(f);
+        if(!in.is_open()) throw runtime_error("File error");
+        
+        string l; int id = 0;
+        while(getline(in, l)) {
+            if(l.empty()) continue;       
+            stringstream ss(l);
+            double x,y,m; char c;
+            
+            if(ss >> x >> c >> y >> c >> m) {
+                ds::Particle p;
+                p.id = id++; 
+                p.pos = {x, y};
+                p.mass = m;
+                p.vel = {0, 0};
+                p.acc = {0, 0};
+                p.isStatic = false;        // we are setting all particles to dynamic
+                ps.push_back(p);
+            }
+        }
+        cout << "Naive Loaded: " << ps.size() << " particles\n"; 
+    }
+
+    
+    void step() {
+        int n = ps.size();
+
+        
+        for(auto& p : ps) p.acc = {0.0, 0.0};
+
+        // Naive O(N^2) used for force calculation
+        for(int i = 0; i < n; ++i) {
+            if(ps[i].isStatic) continue; 
+            ds::Vec2D force = {0.0, 0.0};
+
+            for(int j = 0; j < n; ++j) {
+                if(i == j) continue;     
+
+                
+                ds::Vec2D r = ps[j].pos - ps[i].pos;
+                double dist = sqrt(r.x*r.x + r.y*r.y); 
+                double effD = max(dist, 1e-5); // Avoid division by zero
+
+                double fMag = (K_val * ps[i].mass * ps[j].mass) / pow(effD, Dist_Pow);
+
+                
+                ds::Vec2D fDir = r / effD;
+
+                
+                force = force + (fDir * fMag);
+            }
+
+            
+            ps[i].acc = force / ps[i].mass;
+        }
+        
+        // we are updating velocities and positions using simple Euler integration
+        for(auto& p : ps) {
+            if(p.isStatic) continue;
+            p.vel = p.vel + p.acc * dt;
+            p.pos = p.pos + p.vel * dt;
+        }
+    }
+
+    
+    // we ran simulation for given number of steps and wrote to file
+    void run(int steps, const string& outName) {
+        file.open(outName);
+        cout << "Naive Run: " << steps << " steps.\n";
+        
+        for(int i = 0; i < steps; ++i) {
+            step(); 
+
+            //for loop used to write particle positions to file
+            for(const auto& p : ps) {
+                file << p.pos.x << ", " << p.pos.y << ", " << p.mass << "\n";
+            }
+
+            file << "\n\n"; 
+            
+            
+            if(steps >= 10 && i % (steps/10) == 0) cout << "Step " << i << "\n";
+        }
+
+        file.close(); 
+        cout << "Done.\n";
+    }
 };
 
-struct Force {
-    double fx, fy;
-};
-
-
-const double G = 1.0;
-const double DT = 1e-6;
-const double EPS = 1e-6;
-const double BOUND_X = 10.0;
-const double BOUND_Y = 10.0;
-
-
-void readFromFile(Body* &bodies, int &N, string filename);
-void generateRandomPoints(string filename, int N);
-int removeOutOfBoundary(Body* bodies, int N);
-void calculateForcesAndUpdate(Body* bodies, Force* forces, int N, ofstream &fout);
 
 int main() {
-    srand(time(0)); 
+    try {
+        NaiveSimulation sim;
 
-    Body* bodies = nullptr;
-    Force* forces = nullptr; 
-    int N;
+        
+        // we loaded particles from random_coordinates.txt with K=1.0 and P=1.0
+        sim.init("random_coordinates.txt", 1.0, 1.0);
 
-    // -------------------- Objective 1 & 1.5 --------------------
-    int choice;
-    cout << "Choose input method:\n1) Enter points manually\n2) Read from file\n";
-    cin >> choice;
-
-    if (choice == 1) {
-        cout << "Enter number of points: ";
-        cin >> N;
-        bodies = new Body[N];
-        forces = new Force[N];
-        cout << "Enter mass, x, y for each particle:\n";
-        for (int i = 0; i < N; i++) {
-            cin >> bodies[i].mass >> bodies[i].x >> bodies[i].y;
-            bodies[i].vx = bodies[i].vy = 0.0;
-        }
-    } else if (choice == 2) {
-        string filename;
-        cout << "Enter filename: ";
-        cin >> filename;
-        readFromFile(bodies, N, filename); // -------------------- Objective 2
-        forces = new Force[N];
-    } else {
-        cout << "Invalid choice!\n";
-        return 0;
+        
+        // we ran simulation for 100 steps and saved output
+        sim.run(100, "simulation_output_naive.txt");
+        
+    } catch(const exception& e) {
+        cerr << "Error: " << e.what() << endl;
     }
-
-    // -------------------- Objective 2.5 --------------------
-    N = removeOutOfBoundary(bodies, N);
-
-    int K;
-    cout << "Enter number of simulation steps: ";
-    cin >> K;
-
-    ofstream fout("simulation_output.txt");
-    fout << "x, y, mass\n"; // Header
-
-    // -------------------- Objective 4,5,6,7 --------------------
-    for (int step = 0; step < K; step++) {
-        calculateForcesAndUpdate(bodies, forces, N, fout);
-        fout << "\n\n"; // marks end of current step - Objective 6
-        cout << "Step " << step+1 << " recorded.\n";
-    }
-
-    fout.close();
-
-    // -------------------- Objective 8 --------------------
-    int N_random;
-    cout << "Enter number of random points to generate: ";
-    cin >> N_random;
-    generateRandomPoints("random_points.txt", N_random);
-    cout << "Random points saved in random_points.txt\n";
-
-    
-    delete[] bodies;
-    delete[] forces;
-
-    cout << "Simulation complete. Results saved in simulation_output.txt\n";
-    return 0;
-}
-
-// -------------------- Objective 2: Read from file safely using only dynamic arrays --------------------
-void readFromFile(Body* &bodies, int &N, string filename) {
-    ifstream fin(filename);
-    if (!fin.is_open()) {
-        cout << "Error opening file!\n";
-        N = 0;
-        return;
-    }
-
-    string line;
-    int count = 0;
-
-    // -------------------- First pass: count valid lines --------------------
-    while (getline(fin, line)) {
-        line.erase(0, line.find_first_not_of(" \t\r\n"));
-        line.erase(line.find_last_not_of(" \t\r\n") + 1);
-        if (line.empty()) continue; // skip blank lines
-        if (line.find_first_not_of("0123456789+-.eE,") != string::npos) continue; // skip headers
-        count++;
-    }
-
-    N = count;
-    bodies = new Body[N];
-
-    fin.clear();
-    fin.seekg(0, ios::beg);
-
-    // -------------------- Second pass: read data --------------------
-    int index = 0;
-    while (getline(fin, line) && index < N) {
-        line.erase(0, line.find_first_not_of(" \t\r\n"));
-        line.erase(line.find_last_not_of(" \t\r\n") + 1);
-        if (line.empty()) continue;
-        if (line.find_first_not_of("0123456789+-.eE,") != string::npos) continue;
-
-        size_t pos1 = line.find(',');
-        size_t pos2 = line.find(',', pos1 + 1);
-        bodies[index].mass = stod(line.substr(0, pos1));
-        bodies[index].x = stod(line.substr(pos1 + 1, pos2 - pos1 - 1));
-        bodies[index].y = stod(line.substr(pos2 + 1));
-        bodies[index].vx = bodies[index].vy = 0.0;
-        index++;
-    }
-
-    fin.close();
-}
-
-// -------------------- Objective 2.5: Remove points outside boundary --------------------
-int removeOutOfBoundary(Body* bodies, int N) {
-    int count = 0;
-    for (int i = 0; i < N; i++) {
-        if (bodies[i].x >= -BOUND_X && bodies[i].x <= BOUND_X &&
-            bodies[i].y >= -BOUND_Y && bodies[i].y <= BOUND_Y) {
-            bodies[count++] = bodies[i]; // keep in place
-        }
-    }
-    return count;
-}
-
-// -------------------- Objective 4 & 5: Force calculation and position update --------------------
-void calculateForcesAndUpdate(Body* bodies, Force* forces, int N, ofstream &fout) {
-    // Reset forces
-    for (int i = 0; i < N; i++) {
-        forces[i].fx = 0.0;
-        forces[i].fy = 0.0;
-    }
-
-    // Pairwise forces
-    for (int i = 0; i < N; i++) {
-        for (int j = i+1; j < N; j++) {
-            double dx = bodies[j].x - bodies[i].x;
-            double dy = bodies[j].y - bodies[i].y;
-            double distSq = dx*dx + dy*dy + EPS;
-            double dist = sqrt(distSq);
-
-            double F = (G * bodies[i].mass * bodies[j].mass) / distSq;
-            double Fx = F * dx / dist;
-            double Fy = F * dy / dist;
-
-            forces[i].fx += Fx; forces[i].fy += Fy;
-            forces[j].fx -= Fx; forces[j].fy -= Fy; // Newton's third law
-        }
-    }
-
-    
-    for (int i = 0; i < N; i++) {
-        bodies[i].vx += forces[i].fx / bodies[i].mass * DT;
-        bodies[i].vy += forces[i].fy / bodies[i].mass * DT;
-
-        bodies[i].x += bodies[i].vx * DT;
-        bodies[i].y += bodies[i].vy * DT;
-
-        fout << bodies[i].x << ", " << bodies[i].y << ", " << bodies[i].mass << "\n";
-    }
-}
-
-// -------------------- Objective 8: Generate random points --------------------
-void generateRandomPoints(string filename, int N) {
-    ofstream fout(filename);
-    for (int i = 0; i < N; i++) {
-        double x = -BOUND_X + static_cast<double>(rand()) / RAND_MAX * (2*BOUND_X);
-        double y = -BOUND_Y + static_cast<double>(rand()) / RAND_MAX * (2*BOUND_Y);
-        double mass = 1 + static_cast<double>(rand()) / RAND_MAX * 10; // 1-11
-        fout << mass << "," << x << "," << y << "\n";
-    }
-    fout.close();
 }
