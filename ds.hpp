@@ -10,7 +10,7 @@ namespace ds {
 constexpr double G_CONST = 6.67430e-11;
 constexpr double COULOMB_K = 8.98755e9;
 constexpr double THETA_DEFAULT = 0.5;
-constexpr double SOFTENING = 1e-2;
+constexpr double SOFTENING = 1e-5;
 constexpr double eps = 1e-8;
 
 enum class ForceType { GRAVITY, ELECTRIC, LENNARD_JONES, CUSTOM };

@@ -124,11 +124,11 @@ int main() {
         Simulation sim;
         
         sim.initFromFile("random_coordinates.txt", 1, 1.0); 
-        sim.run(500, "simulation_output.txt");
+        sim.run(100, "simulation_output.txt");
         
     } catch (const exception& e) {
         cerr << "ERROR: " << e.what() << endl;
-        return 1;
     }
+
     return 0;
 }
