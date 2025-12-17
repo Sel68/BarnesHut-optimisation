@@ -4,7 +4,9 @@
 #include <iostream>
 #include <stdexcept>
 
+
 using namespace std;
+
 
 namespace ds {
 
@@ -410,6 +412,137 @@ public:
         return computeForceRecursive(root, p, k, power);
     }
 };
+template<typename T>
+class Stack {
+private:
+    T* arr;
+    size_t capacity;
+    size_t topIndex;
+
+    void resize() {
+        capacity *= 2;
+        T* newArr = new T[capacity];
+        for (size_t i = 0; i < topIndex; ++i)
+            newArr[i] = arr[i];
+        delete[] arr;
+        arr = newArr;
+    }
+
+public:
+    Stack(size_t cap = 10) : capacity(cap), topIndex(0) {
+        arr = new T[capacity];
+    }
+
+    ~Stack() {
+        delete[] arr;
+    }
+
+    void push(const T& value) {
+        if (topIndex == capacity)
+            resize();
+        arr[topIndex++] = value;
+    }
+
+    void pop() {
+        if (empty())
+            throw runtime_error("Stack underflow");
+        --topIndex;
+    }
+
+    T top() const {
+        if (empty())
+            throw runtime_error("Stack is empty");
+        return arr[topIndex - 1];
+    }
+
+    bool empty() const {
+        return topIndex == 0;
+    }
+
+    size_t size() const {
+        return topIndex;
+    }
+
+    void print() const {
+        cout << "Stack (top -> bottom): ";
+        for (int i = topIndex - 1; i >= 0; --i)
+            cout << arr[i] << " ";
+        cout << endl;
+    }
+};
+
+template<typename T>
+class Queue {
+private:
+    T* arr;
+    size_t capacity;
+    size_t frontIndex;
+    size_t rearIndex;
+    size_t count;
+
+    void resize() {
+        size_t newCap = capacity * 2;
+        T* newArr = new T[newCap];
+
+        for (size_t i = 0; i < count; ++i)
+            newArr[i] = arr[(frontIndex + i) % capacity];
+
+        delete[] arr;
+        arr = newArr;
+        capacity = newCap;
+        frontIndex = 0;
+        rearIndex = count;
+    }
+
+public:
+    Queue(size_t cap = 10)
+        : capacity(cap), frontIndex(0), rearIndex(0), count(0) {
+        arr = new T[capacity];
+    }
+
+    ~Queue() {
+        delete[] arr;
+    }
+
+    void enqueue(const T& value) {
+        if (count == capacity)
+            resize();
+
+        arr[rearIndex] = value;
+        rearIndex = (rearIndex + 1) % capacity;
+        ++count;
+    }
+
+    void dequeue() {
+        if (empty())
+            throw runtime_error("Queue underflow");
+
+        frontIndex = (frontIndex + 1) % capacity;
+        --count;
+    }
+
+    T front() const {
+        if (empty())
+            throw runtime_error("Queue is empty");
+        return arr[frontIndex];
+    }
+
+    bool empty() const {
+        return count == 0;
+    }
+
+    size_t size() const {
+        return count;
+    }
+
+    void print() const {
+        cout << "Queue (front -> rear): ";
+        for (size_t i = 0; i < count; ++i)
+            cout << arr[(frontIndex + i) % capacity] << " ";
+        cout << endl;
+    }
+};
+
 }
 
 
