@@ -543,6 +543,31 @@ public:
     }
 };
 
+template<class It, class Comp>
+void merge_sort(It l, It r, Comp cmp){
+    auto n = r - l;
+    if(n <= 1) return;
+
+    It m = l + n/2;
+    merge_sort(l, m, cmp);
+    merge_sort(m, r, cmp);
+
+    using T = typename iterator_traits<It>::value_type;
+    vector<T> tmp;
+    tmp.reserve(n);
+
+    It i = l, j = m;
+    while(i < m && j < r){
+        if(cmp(*j, *i)) tmp.push_back(*j++);
+        else tmp.push_back(*i++);
+    }
+    while(i < m) tmp.push_back(*i++);
+    while(j < r) tmp.push_back(*j++);
+
+    for (int k = 0; k<n; k++) *(l + k) = tmp[k];
+}
+
+
 }
 
 
