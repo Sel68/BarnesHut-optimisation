@@ -11,6 +11,8 @@ const double BOUND_Y = 100.0;
 const double MASS_LOW = 10;
 const double MASS_HIGH = 1e4;
 
+const double v_LIM = 1;
+
 void generateRandomPoints(const string& filename, int N) {
     ofstream fout(filename);
 
@@ -24,8 +26,16 @@ void generateRandomPoints(const string& filename, int N) {
         double y = -BOUND_Y + (static_cast<double>(rand()) / RAND_MAX) * (2 * BOUND_Y);
         double mass = MASS_LOW  
             + (static_cast<double>(rand()) / RAND_MAX) *(MASS_HIGH - MASS_LOW);
-        fout << x << "," << y << "," << mass << "\n";
+        double vx, vy;
+        if ((static_cast<double>(rand()) / RAND_MAX) > 0.9) {
+            vx = (static_cast<double>(rand()) / RAND_MAX) * v_LIM;
+        }
+        if ((static_cast<double>(rand()) / RAND_MAX) > 0.9) {
+            vy = (static_cast<double>(rand()) / RAND_MAX) * v_LIM;
+        }
+        fout << x << "," << y << "," << mass << "," << vx << "," << vy << "\n";
     }
+
 cout<<"Random points written to random_coordinates.txt\n";
     fout.close();
 }

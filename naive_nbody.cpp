@@ -8,8 +8,6 @@
 #include <chrono>
 #include "ds.hpp"
 
-
-
 using namespace std;
 class NaiveSimulation {
     vector<ds::Particle> ps;
@@ -27,15 +25,18 @@ public:
         while(getline(in, l)) {
             if(l.empty()) continue;
             stringstream ss(l);
-            double x,y,m; char c;
-            if(ss >> x >> c >> y >> c >> m) {
+            double x, y, m, vx, vy;
+            char c1, c2, c3, c4;
+            
+            if(ss >> x >> c1 >> y >> c2 >> m >> c3 >> vx >> c4 >> vy) {
                 ds::Particle p;
                 p.id = id++; p.pos = {x, y}; p.mass = m;
-                p.vel = {0, 0}; p.acc = {0, 0}; p.isStatic = false;
+                p.vel = {vx, vy}; p.acc = {0, 0}; p.isStatic = false;
                 ps.push_back(p);
             }
         }
-        cout << "Naive Loaded: " << ps.size() << "\n";
+        if(ps.empty()) cout << "Warning: No particles loaded. Check file format!\n";
+        else cout << "Naive Loaded: " << ps.size() << " particles.\n";
     }
 
     void step() {
@@ -91,20 +92,18 @@ public:
 
 int main() {
     auto start = std::chrono::high_resolution_clock::now();
-
     try {
         NaiveSimulation sim;
         sim.init("random_coordinates.txt", 1.0, 1.0);
-        sim.run(100, "simulation_output_naive.txt");
+        sim.run(200, "simulation_output_naive.txt");
     } catch(const exception& e) {
         cerr << "Error: " << e.what() << endl;
     }
-        auto end = std::chrono::high_resolution_clock::now();
 
-        std::chrono::duration<double> elapsed = end - start;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    cout << "Execution time: " << elapsed.count() << " seconds\n";
 
-        cout << "Execution time: " << elapsed.count() << "seconds\n";
-
-        return 0;
+    return 0;
 
 }
