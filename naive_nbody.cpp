@@ -5,7 +5,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
-#include <ctime>
+#include <chrono>
 #include "ds.hpp"
 
 
@@ -91,7 +91,7 @@ public:
 };
 
 int main() {
-    clock_t s = clock();
+    auto start = std::chrono::high_resolution_clock::now();
 
     try {
         NaiveSimulation sim;
@@ -100,7 +100,12 @@ int main() {
     } catch(const exception& e) {
         cerr << "Error: " << e.what() << endl;
     }
-    cout<<"Execution Time:  " << double(clock() - s) / CLOCKS_PER_SEC << " seconds.\n";  
-    return 0;
+        auto end = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double> elapsed = end - start;
+
+        cout << "Execution time: " << elapsed.count() << "seconds\n";
+
+        return 0;
 
 }
