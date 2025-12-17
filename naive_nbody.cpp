@@ -5,7 +5,10 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <ctime>
 #include "ds.hpp"
+
+
 
 using namespace std;
 
@@ -88,6 +91,8 @@ public:
 };
 
 int main() {
+    clock_t s = clock();
+
     try {
         NaiveSimulation sim;
         sim.init("random_coordinates.txt", 1.0, 1.0);
@@ -95,5 +100,7 @@ int main() {
     } catch(const exception& e) {
         cerr << "Error: " << e.what() << endl;
     }
+    cout<<"Execution Time:  " << double(clock() - s) / CLOCKS_PER_SEC << " seconds.\n";  
+    return 0;
 
 }
