@@ -90,22 +90,35 @@ public:
     }
 
     void step() {
+        auto cmp = [](const ds::Particle& a, const ds::Particle& b) {
+            return a.pos.x < b.pos.x;
+        };
+        ds::merge_sort(particles.begin(), particles.end(), cmp);
+
         // tree init
         updateBounds();
         tree->build(particles, boundaries);
 
-        // Compute Forces (maybe parallelize with pragma later)
-        for (auto& p : particles) {
-            if(p.isStatic) continue;
-            ds::Vec2D force = tree->getForceOn(&p, K_val, Dist_Pow);
-            p.acc = force / p.mass;
+        ds::Queue<ds::Particle*> jobQueue;
+        for (auto& p: particles){
+            if (!p.isStatic) jobQueue.enqueue(&p);
         }
 
-        // Integrate, Symplectic Euler
-        for (auto& p : particles) {
-            if(p.isStatic) continue;
-            p.vel += p.acc *timeStep;
-            p.pos += p.vel * timeStep;
+        ds::Stack<ds::Particle*> integrationStack;
+
+        while (!jobQueue.empty()){
+            ds::Particle* p = jobQueue.dequeue();
+            ds::Vec2D force = tree->getForceOn(p, K_val, Dist_Pow);
+            p->acc = force / p->mass;
+
+            integrationStack.push(p);
+        }
+
+        while (!integrationStack.empty()) {
+            ds::Particle* p = integrationStack.pop();
+
+            p->vel += p->acc * timeStep;
+            p->pos += p->vel * timeStep;
         }
     }
 

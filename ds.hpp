@@ -443,7 +443,7 @@ public:
         arr[topIndex++] = value;
     }
 
-    void pop() {
+    T pop() {
         if (empty())
             throw runtime_error("Stack underflow");
         --topIndex;
@@ -513,7 +513,7 @@ public:
         ++count;
     }
 
-    void dequeue() {
+    T dequeue() {
         if (empty())
             throw runtime_error("Queue underflow");
 
@@ -566,8 +566,6 @@ void merge_sort(It l, It r, Comp cmp){
 
     for (int k = 0; k<n; k++) *(l + k) = tmp[k];
 }
-
-
 }
 
 
