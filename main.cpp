@@ -12,6 +12,9 @@
 
 using namespace std;
 
+constexpr double G_CONST = 6.67430e-11;
+constexpr double COULOMB_K = 8.98755e9;
+
 class Simulation {
 private:
     vector<ds::Particle> particles;
@@ -34,40 +37,48 @@ public:
     void initFromFile(const string& filename, double k, double pow) {
         K_val = k;
         Dist_Pow = pow;
-        particles.clear(); //clear state
-
+        particles.clear();
         ifstream infile(filename);
-        if (!infile.is_open()) {
-            throw runtime_error("Cannot open input file: " + filename);
-        }
+        if (!infile.is_open()) throw runtime_error("File error");
+
         string line;
         int idCounter = 0;
-
         while (getline(infile, line)) {
             if (line.empty()) continue;
-
             stringstream ss(line);
-            double x, y, m;
-            char comma; 
+            double x, y, m, vx, vy;
+            char c1, c2, c3, c4; // eat commas
 
-            // parser for: x, y, mass
-            if (ss >> x >> comma >> y >> comma >> m) {
+            if (ss >> x >> c1 >> y >> c2 >> m >> c3 >> vx >> c4 >> vy) {
                 ds::Particle p;
                 p.id = idCounter++;
                 p.pos = {x, y};
                 p.mass = m;
-                p.vel = {0.0, 0.0}; // Default set to zero velocity
+                p.vel = {vx, vy}; 
                 p.acc = {0.0, 0.0};
-                p.isStatic = false; // Default non-static
+                // p.isStatic = (m > 1e7);
                 particles.push_back(p);
             }
         }
-
-        // Initialize tree with size detected from file
         tree = make_unique<ds::BarnesHutTree>(particles.size() * 2);
         updateBounds();
-        
-        cout << "Loaded " << particles.size() << " particles from file.\n";
+    }
+
+    void initFromManual(int n, double k, double pow) {
+        K_val = k;
+        Dist_Pow = pow;
+        particles.clear();
+        cout << "Enter " << n << " particles (x, y, mass):\n";
+        for(int i=0; i<n; ++i) {
+            double x, y, m;
+            cout << "P" << i << ": "; cin >> x >> y >> m;
+            ds::Particle p;
+            p.id = i; p.pos = {x, y}; p.mass = m;
+            p.vel = {0.0,0.0}; p.acc = {0.0,0.0}; p.isStatic = false;
+            particles.push_back(p);
+        }
+        tree = make_unique<ds::BarnesHutTree>(particles.size() * 2);
+        updateBounds();
     }
 
     void updateBounds() {
@@ -119,23 +130,60 @@ public:
     }
 };
 
+void printHeader(string title) {
+    cout << "\033[1;36m" << string(40, '=') << "\n";
+    cout << "  " << title << "\n";
+    cout << string(40, '=') << "\033[0m\n";
+}
+
+void runner() {
+    Simulation sim;
+    double k, p;
+    int choice;
+
+    printHeader("BARNES-HUT SIMULATOR CONFIG");
+
+    cout << "1) Select Force Constant (k):\n";
+    cout << "   [1] Gravitational (G = " << G_CONST << ")\n   [2] Coulomb (k = " << COULOMB_K<<  ")\n   [3] Custom\n>> ";
+    cin >> choice;
+    if(choice == 1) k = G_CONST;
+    else if(choice == 2) k = COULOMB_K;
+    else { cout << "Enter k: "; cin >> k; }
+
+    cout << "\n2) Select Distance Power (1/r^n):\n";
+    cout << "   [1] Linear (n=1)\n   [2] Inverse Square (n=2)\n   [3] Custom\n>> ";
+    cin >> choice;
+    if(choice == 1) p = 1.0;
+    else if(choice == 2) p = 2.0;
+    else { cout << "Enter n: "; cin >> p; }
+
+    cout << "\n3) Input Source:\n";
+    cout << "   [1] Read 'random_coordinates.txt'\n   [2] Manual Entry\n>> ";
+    cin >> choice;
+
+    try {
+        if(choice == 1) {
+            sim.initFromFile("random_coordinates.txt", k, p);
+        } else {
+            int n; cout << "Number of particles: "; cin >> n;
+            sim.initFromManual(n, k, p);
+        }
+
+        int steps;
+        cout << "\n4) Simulation Steps: "; cin >> steps;
+
+        auto start = chrono::high_resolution_clock::now();
+        sim.run(steps, "simulation_output.txt");
+        auto end = chrono::high_resolution_clock::now();
+        
+        chrono::duration<double> elapsed = end - start;
+        cout << "\033[1;32mTotal Time: " << fixed << setprecision(4) << elapsed.count() << "s\033[0m\n";
+
+    } catch (const exception& e) {
+        cerr << "\033[1;31mERROR: " << e.what() << "\033[0m" << endl;
+    }
+}
 
 int main() {
-        auto start = std::chrono::high_resolution_clock::now();
-    try {
-        Simulation sim;
-        
-        sim.initFromFile("random_coordinates.txt", 1, 1.0); 
-        sim.run(100, "simulation_output.txt");
-        
-    } catch (const exception& e) {
-        cerr << "ERROR: " << e.what() << endl;
-    }
-        auto end = std::chrono::high_resolution_clock::now();
-
-        std::chrono::duration<double> elapsed = end - start;
-
-        cout << "Execution time: " << elapsed.count() << " seconds\n";
-
-    return 0;
+    runner(); return 0;   
 }
