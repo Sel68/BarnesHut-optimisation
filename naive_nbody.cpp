@@ -11,7 +11,6 @@
 
 
 using namespace std;
-
 class NaiveSimulation {
     vector<ds::Particle> ps;
     double dt = 0.01;

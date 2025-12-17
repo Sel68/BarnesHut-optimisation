@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <iomanip>
 #include "ds.hpp"
+#include <chrono>
 
 using namespace std;
 
@@ -120,6 +121,7 @@ public:
 
 
 int main() {
+        auto start = std::chrono::high_resolution_clock::now();
     try {
         Simulation sim;
         
@@ -129,6 +131,11 @@ int main() {
     } catch (const exception& e) {
         cerr << "ERROR: " << e.what() << endl;
     }
+        auto end = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double> elapsed = end - start;
+
+        cout << "Execution time: " << elapsed.count() << " seconds\n";
 
     return 0;
 }
