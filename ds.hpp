@@ -443,7 +443,7 @@ public:
         arr[topIndex++] = value;
     }
 
-    T pop() {
+    void pop() {
         if (empty())
             throw runtime_error("Stack underflow");
         --topIndex;
@@ -513,7 +513,7 @@ public:
         ++count;
     }
 
-    T dequeue() {
+    void dequeue() {
         if (empty())
             throw runtime_error("Queue underflow");
 

@@ -107,7 +107,8 @@ public:
         ds::Stack<ds::Particle*> integrationStack;
 
         while (!jobQueue.empty()){
-            ds::Particle* p = jobQueue.dequeue();
+            ds::Particle* p = jobQueue.front();
+            jobQueue.dequeue();
             ds::Vec2D force = tree->getForceOn(p, K_val, Dist_Pow);
             p->acc = force / p->mass;
 
@@ -115,7 +116,8 @@ public:
         }
 
         while (!integrationStack.empty()) {
-            ds::Particle* p = integrationStack.pop();
+            ds::Particle* p = integrationStack.top();
+            integrationStack.pop();
 
             p->vel += p->acc * timeStep;
             p->pos += p->vel * timeStep;
