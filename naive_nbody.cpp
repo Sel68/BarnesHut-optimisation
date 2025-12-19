@@ -94,7 +94,7 @@ int main() {
     auto start = std::chrono::high_resolution_clock::now();
     try {
         NaiveSimulation sim;
-        sim.init("random_coordinates.txt", 1.0, 1.0);
+        sim.init("random_coordinates.txt", 1.0, 2);
         sim.run(200, "simulation_output_naive.txt");
     } catch(const exception& e) {
         cerr << "Error: " << e.what() << endl;

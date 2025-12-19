@@ -8,8 +8,8 @@ using namespace std;
 const double BOUND_X = 100.0;
 const double BOUND_Y = 100.0;
 
-const double MASS_LOW = 10;
-const double MASS_HIGH = 1e4;
+const double MASS_LOW = 50;
+const double MASS_HIGH = 200;
 
 const double v_LIM = 1;
 
