@@ -19,6 +19,8 @@ class Simulation {
 private:
     vector<ds::Particle> particles;
     unique_ptr<ds::BarnesHutTree> tree;
+    ds::HashTable<int, ds::Particle*> registry;
+    
     double timeStep;
     ds::BoundingBox boundaries;
 
@@ -29,7 +31,7 @@ private:
     ofstream dataFile;
 
 public:
-    Simulation(){
+    Simulation(): registry(1009) {
         timeStep = 0.01;
         boundaries = {ds::Vec2D(0.0,0.0), 1000};
     }
@@ -38,6 +40,8 @@ public:
         K_val = k;
         Dist_Pow = pow;
         particles.clear();
+        particles.reserve(1000);
+
         ifstream infile(filename);
         if (!infile.is_open()) throw runtime_error("File error");
 
@@ -60,6 +64,11 @@ public:
                 particles.push_back(p);
             }
         }
+
+        for (int i = 0; i<particles.size(); i++){
+            registry.insert(particles[i].id, &particles[i]);
+        }
+
         tree = make_unique<ds::BarnesHutTree>(particles.size() * 2);
         updateBounds();
     }
@@ -80,35 +89,7 @@ public:
         tree = make_unique<ds::BarnesHutTree>(particles.size() * 2);
         updateBounds();
     }
-    //demonstrating O(1) particle lookup using hashing.
-    void hashingFunc() {
-        if (particles.empty()) return;
-
-        
-        ds::HashTable<int, ds::Particle*> particleMap(1000);
-
-        
-        for (size_t i = 0; i < particles.size(); ++i) {
-            particleMap.insert(particles[i].id, &particles[i]);
-        }
-
-        
-        try {
-            int targetID = 42;
-            if (targetID < particles.size()) {
-                ds::Particle* p = particleMap.search(targetID); 
-                cout << "[Hash Search] Success! Found Particle " << targetID 
-                     << " at Pos: " << p->pos << endl;
-            } else {
-                cout << "[Hash Search] Skipped search (Particle " << targetID 
-                     << " does not exist in this small dataset)." << endl;
-            }
-        } catch (...) {
-            cout << "[Hash Search] Particle not found." << endl;
-        }
-        cout << "----------------------------\n";
-    }
-
+    
     void updateBounds() {
         double maxCoord = 0;
         for(const auto& p : particles) {
@@ -123,6 +104,9 @@ public:
         };
         ds::merge_sort(particles.begin(), particles.end(), cmp);
 
+        for(size_t i=0; i<particles.size(); ++i) {
+            registry.insert(particles[i].id, &particles[i]); 
+        }
         // tree init
         updateBounds();
         tree->build(particles, boundaries);
@@ -166,7 +150,11 @@ public:
             }
             dataFile << "\n\n";
             int MOD = steps/10;
-            if (i % MOD == 0) cout << "Step " << i << " complete.\n";
+            if (i % MOD == 0){
+                cout << "Step " << i << " complete.\n";
+                ds::Particle* watchedParticle = registry.search(0);
+                cout << "[Step " << i << "] Particle #0 Pos: " << watchedParticle->pos << "\n";
+            }
         }
         dataFile.close();
         cout << "Done.\n";

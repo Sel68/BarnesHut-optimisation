@@ -16,8 +16,8 @@ constexpr double THETA_DEFAULT = 0.5;
 constexpr double SOFTENING = 1e-5;
 constexpr double eps = 1e-8;
 
-enum class ForceType { GRAVITY, ELECTRIC, LENNARD_JONES, CUSTOM };
-enum class IntegratorType { EULER, SYMPLECTIC_EULER, VERLET, RK4 };
+// enum class ForceType { GRAVITY, ELECTRIC, LENNARD_JONES, CUSTOM };
+// enum class IntegratorType { EULER, SYMPLECTIC_EULER, VERLET, RK4 };
 
 template<typename T>
 class SList {
