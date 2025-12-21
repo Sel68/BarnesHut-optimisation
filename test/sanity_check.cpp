@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "ds.hpp"
+#include "../ds.hpp"
 
 using namespace std;
 using namespace ds;
