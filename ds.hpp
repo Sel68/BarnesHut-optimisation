@@ -566,6 +566,51 @@ void merge_sort(It l, It r, Comp cmp){
 
     for (int k = 0; k<n; k++) *(l + k) = tmp[k];
 }
+// Add this inside namespace ds in ds.hpp
+
+template<typename K, typename V>
+class HashTable {
+private:
+    struct Entry {
+        K key;
+        V value;
+        bool operator==(const Entry& other) const { return key == other.key; }
+        friend ostream& operator<<(ostream& os, const Entry& e) { return os; } 
+    };
+
+    // created a simple hash table with separate chaining using SList
+    SList<Entry>* table;
+    size_t capacity;
+
+    size_t hash(int key) const {
+        return key % capacity; 
+    }
+
+public:
+    HashTable(size_t cap = 100) : capacity(cap) {
+        table = new SList<Entry>[capacity];
+    }
+
+    ~HashTable() {
+        delete[] table;
+    }
+
+    void insert(K key, V value) {
+        size_t index = hash(key);
+        table[index].push_back({key, value});
+    }
+
+    V search(K key) {
+        size_t index = hash(key);
+        // list traverses manually to find key
+        
+        for(size_t i = 0; i < table[index].length(); i++) {
+            Entry e = table[index].get(i);
+            if(e.key == key) return e.value;
+        }// exception if not found
+        throw runtime_error("Key not found");
+    }
+};
 }
 
 
